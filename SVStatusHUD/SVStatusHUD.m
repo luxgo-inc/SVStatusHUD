@@ -45,10 +45,10 @@
 static SVStatusHUD *sharedView = nil;
 
 - (void)dealloc {
-	
-	if(fadeOutTimer != nil)
-		[fadeOutTimer invalidate], [fadeOutTimer release], fadeOutTimer = nil;
-	
+    
+    if(fadeOutTimer != nil)
+        [fadeOutTimer invalidate], [fadeOutTimer release], fadeOutTimer = nil;
+    
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
     [hudView release];
@@ -59,16 +59,16 @@ static SVStatusHUD *sharedView = nil;
 }
 
 + (SVStatusHUD*)sharedView {
-	
-	if(sharedView == nil)
-		sharedView = [[SVStatusHUD alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-	
-	return sharedView;
+    
+    if(sharedView == nil)
+        sharedView = [[SVStatusHUD alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    
+    return sharedView;
 }
 
 
 + (void)setStatus:(NSString *)string {
-	[[SVStatusHUD sharedView] setStatus:string];
+    [[SVStatusHUD sharedView] setStatus:string];
 }
 
 #pragma mark - Show Methods
@@ -89,65 +89,64 @@ static SVStatusHUD *sharedView = nil;
 #pragma mark - Instance Methods
 
 - (id)initWithFrame:(CGRect)frame {
-	
+    
     if ((self = [super initWithFrame:frame])) {
         [self.overlayWindow addSubview:self];
         self.backgroundColor = [UIColor clearColor];
         self.userInteractionEnabled = NO;
-		self.alpha = 0;
+        self.alpha = 0;
         self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     }
-	
+    
     return self;
 }
 
 
 - (void)setStatus:(NSString *)string {
-	
-    CGFloat hudWidth = 160;
-    CGFloat hudHeight = 160;
-	
-	self.hudView.bounds = CGRectMake(0, 0, hudWidth, hudHeight);
-	
+    
+    CGFloat hudWidth = 250;
+    CGFloat hudHeight = 180;
+    
+    self.hudView.bounds = CGRectMake(0, 0, hudWidth, hudHeight);
+    
     if(!string)
         self.imageView.center = CGPointMake(self.hudView.bounds.size.width/2, self.hudView.bounds.size.height/2);
     else
         self.imageView.center = CGPointMake(self.hudView.bounds.size.width/2, 70);
-	
-	self.stringLabel.hidden = NO;
-	self.stringLabel.text = string;
+    
+    self.stringLabel.hidden = NO;
+    self.stringLabel.text = string;
 }
 
 
 - (void)showWithImage:(UIImage *)image status:(NSString *)string duration:(NSTimeInterval)duration {
-	
-	self.imageView.image = image;
     
-	[self setStatus:string];
-    [self.overlayWindow setHidden:NO];
+    self.imageView.image = image;
+    
+    [self setStatus:string];
+    [self.overlayWindow makeKeyAndVisible];
     [self positionHUD:nil];
     
-	if(self.alpha != 1) {
+    if(self.alpha != 1) {
         [self registerNotifications];
-		self.alpha = 1;
-	}
+        self.alpha = 1;
+    }
     
     if(fadeOutTimer != nil)
-		[fadeOutTimer invalidate], [fadeOutTimer release], fadeOutTimer = nil;
-	
-	fadeOutTimer = [[NSTimer scheduledTimerWithTimeInterval:duration target:self selector:@selector(dismiss) userInfo:nil repeats:NO] retain];
+        [fadeOutTimer invalidate], [fadeOutTimer release], fadeOutTimer = nil;
+    
+    fadeOutTimer = [[NSTimer scheduledTimerWithTimeInterval:duration target:self selector:@selector(dismiss) userInfo:nil repeats:NO] retain];
     
     [self setNeedsDisplay];
 }
 
 
 - (void)registerNotifications {
-    [[NSNotificationCenter defaultCenter] addObserver:self 
-                                             selector:@selector(positionHUD:) 
-                                                 name:UIApplicationDidChangeStatusBarOrientationNotification 
-                                               object:nil];  
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(positionHUD:)
+                                                 name:UIApplicationDidChangeStatusBarOrientationNotification
+                                               object:nil];
 }
-
 
 - (void)positionHUD:(NSNotification*)notification {
     
@@ -168,43 +167,92 @@ static SVStatusHUD *sharedView = nil;
     CGPoint newCenter;
     CGFloat rotateAngle;
     
-    switch (orientation) { 
-        case UIInterfaceOrientationPortraitUpsideDown:
-            rotateAngle = M_PI; 
-            newCenter = CGPointMake(posX, orientationFrame.size.height-posY);
-            break;
-        case UIInterfaceOrientationLandscapeLeft:
-            rotateAngle = -M_PI/2.0f;
-            newCenter = CGPointMake(posY, posX);
-            break;
-        case UIInterfaceOrientationLandscapeRight:
-            rotateAngle = M_PI/2.0f;
-            newCenter = CGPointMake(orientationFrame.size.height-posY, posX);
-            break;
-        default: // as UIInterfaceOrientationPortrait
-            rotateAngle = 0.0;
-            newCenter = CGPointMake(posX, posY);
-            break;
-    } 
+    // iOS7 or before
+    if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_7_1) {
+        
+        switch (orientation) {
+            case UIInterfaceOrientationPortraitUpsideDown:
+                rotateAngle = M_PI;
+                newCenter = CGPointMake(posX, orientationFrame.size.height-posY);
+                break;
+            case UIInterfaceOrientationLandscapeLeft:
+                rotateAngle = -M_PI/2.0f;
+                newCenter = CGPointMake(posY, posX);
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                rotateAngle = M_PI/2.0f;
+                newCenter = CGPointMake(orientationFrame.size.height-posY, posX);
+                break;
+            default: // as UIInterfaceOrientationPortrait
+                rotateAngle = 0.0;
+                newCenter = CGPointMake(posX, posY);
+                break;
+        }
+        
+    // iOS8
+    } else if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_8_4) {
+        
+        switch (orientation) {
+            case UIInterfaceOrientationPortraitUpsideDown:
+                rotateAngle = M_PI;
+                newCenter = CGPointMake(posX, orientationFrame.size.height-posY);
+                break;
+            case UIInterfaceOrientationLandscapeLeft:
+                rotateAngle = -M_PI/2.0f;
+                newCenter = CGPointMake([UIScreen mainScreen].bounds.size.height/2, [UIScreen mainScreen].bounds.size.width/2);
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                rotateAngle = M_PI/2.0f;
+                newCenter = CGPointMake([UIScreen mainScreen].bounds.size.height/2, [UIScreen mainScreen].bounds.size.width/2);
+                break;
+            default: // as UIInterfaceOrientationPortrait
+                rotateAngle = 0.0;
+                newCenter = CGPointMake(posX, posY);
+                break;
+        }
+        
+    // iOS9
+    } else {
+        
+        switch (orientation) {
+            case UIInterfaceOrientationPortraitUpsideDown:
+                rotateAngle = M_PI;
+                newCenter = CGPointMake(posX, orientationFrame.size.height-posY);
+                break;
+            case UIInterfaceOrientationLandscapeLeft:
+                rotateAngle = -M_PI/2.0f;
+                newCenter = CGPointMake([UIScreen mainScreen].bounds.size.height/2, [UIScreen mainScreen].bounds.size.width/2);
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                rotateAngle = M_PI/2.0f;
+                newCenter = CGPointMake([UIScreen mainScreen].bounds.size.height/2, [UIScreen mainScreen].bounds.size.width/2);
+                break;
+            default: // as UIInterfaceOrientationPortrait
+                rotateAngle = 0.0;
+                newCenter = CGPointMake(posX, posY);
+                break;
+        }
+    }
     
-    self.hudView.transform = CGAffineTransformMakeRotation(rotateAngle); 
+    self.hudView.transform = CGAffineTransformMakeRotation(rotateAngle);
     self.hudView.center = newCenter;
 }
 
 - (void)dismiss {
-	
-	[UIView animateWithDuration:SVStatusHUDFadeOutDuration
-						  delay:0
-						options:UIViewAnimationCurveEaseIn | UIViewAnimationOptionAllowUserInteraction
-					 animations:^{	
-						 sharedView.alpha = 0;
-					 }
-					 completion:^(BOOL finished){ 
+    
+    [UIView animateWithDuration:SVStatusHUDFadeOutDuration
+                          delay:0
+                        options:UIViewAnimationCurveEaseIn | UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+                         sharedView.alpha = 0;
+                     }
+                     completion:^(BOOL finished){
                          if(sharedView.alpha == 0) {
                              [[NSNotificationCenter defaultCenter] removeObserver:sharedView];
-                             [overlayWindow removeFromSuperview];
                              [overlayWindow release], overlayWindow = nil;
                              [sharedView release], sharedView = nil;
+                             
+                             //                             [[UIApplication sharedApplication].windows.lastObject makeKeyAndVisible];
                              
                              // uncomment to make sure UIWindow is gone from app.windows
                              //NSLog(@"%@", [UIApplication sharedApplication].windows);
@@ -228,7 +276,7 @@ static SVStatusHUD *sharedView = nil;
     if(!hudView) {
         hudView = [[UIView alloc] initWithFrame:CGRectZero];
         hudView.layer.cornerRadius = 10;
-		hudView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
+        hudView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
         hudView.autoresizingMask = (UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin |
                                     UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleLeftMargin);
         
@@ -239,21 +287,17 @@ static SVStatusHUD *sharedView = nil;
 
 - (UILabel *)stringLabel {
     if (stringLabel == nil) {
-        stringLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 123, 160, 20)];
-		stringLabel.textColor = [UIColor whiteColor];
-		stringLabel.backgroundColor = [UIColor clearColor];
-		stringLabel.adjustsFontSizeToFitWidth = YES;
-#if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
+        stringLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 140, 250, 20)];
+        stringLabel.textColor = [UIColor whiteColor];
+        stringLabel.backgroundColor = [UIColor clearColor];
+        stringLabel.adjustsFontSizeToFitWidth = YES;
         stringLabel.textAlignment = UITextAlignmentCenter;
-#else
-        stringLabel.textAlignment = NSTextAlignmentCenter;
-#endif
-		stringLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
-		stringLabel.font = [UIFont boldSystemFontOfSize:16];
-		stringLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.7];
-		stringLabel.shadowOffset = CGSizeMake(1, 1);
+        stringLabel.baselineAdjustment = UIBaselineAdjustmentAlignCenters;
+        stringLabel.font = [UIFont boldSystemFontOfSize:16];
+        stringLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.7];
+        stringLabel.shadowOffset = CGSizeMake(1, 1);
         stringLabel.numberOfLines = 0;
-		[self.hudView addSubview:stringLabel];
+        [self.hudView addSubview:stringLabel];
     }
     return stringLabel;
 }
@@ -266,7 +310,7 @@ static SVStatusHUD *sharedView = nil;
         imageView.layer.shadowRadius = 1;
         imageView.layer.shadowOpacity = 0.5;
         imageView.layer.shadowOffset = CGSizeMake(0, 1);
-		[self.hudView addSubview:imageView];
+        [self.hudView addSubview:imageView];
     }
     return imageView;
 }
